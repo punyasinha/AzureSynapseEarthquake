@@ -1,0 +1,115 @@
+{
+    "name": "Pipeline 1",
+    "properties": {
+        "activities": [
+            {
+                "name": "bronze",
+                "type": "SynapseNotebook",
+                "dependsOn": [],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "notebook": {
+                        "referenceName": "bronze",
+                        "type": "NotebookReference"
+                    },
+                    "snapshot": true,
+                    "sparkPool": {
+                        "referenceName": "synapseonly2",
+                        "type": "BigDataPoolReference"
+                    }
+                }
+            },
+            {
+                "name": "silver",
+                "type": "SynapseNotebook",
+                "dependsOn": [
+                    {
+                        "activity": "bronze",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "notebook": {
+                        "referenceName": "silver",
+                        "type": "NotebookReference"
+                    },
+                    "parameters": {
+                        "bronze_output": {
+                            "value": {
+                                "value": "@string(activity('bronze').output.status.Output.result.exitValue)",
+                                "type": "Expression"
+                            },
+                            "type": "string"
+                        }
+                    },
+                    "snapshot": true,
+                    "sparkPool": {
+                        "referenceName": "synapseonly2",
+                        "type": "BigDataPoolReference"
+                    }
+                }
+            },
+            {
+                "name": "gold",
+                "type": "SynapseNotebook",
+                "dependsOn": [
+                    {
+                        "activity": "silver",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "notebook": {
+                        "referenceName": "silver",
+                        "type": "NotebookReference"
+                    },
+                    "parameters": {
+                        "bronze_output": {
+                            "value": {
+                                "value": "@string(activity('bronze').output.status.Output.result.exitValue)",
+                                "type": "Expression"
+                            },
+                            "type": "string"
+                        },
+                        "silver_output": {
+                            "value": {
+                                "value": "@string(activity('silver').output.status.Output.result.exitValue)",
+                                "type": "Expression"
+                            },
+                            "type": "string"
+                        }
+                    },
+                    "snapshot": true
+                }
+            }
+        ],
+        "annotations": []
+    }
+}
